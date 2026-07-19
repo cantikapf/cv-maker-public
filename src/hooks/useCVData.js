@@ -204,7 +204,11 @@ export function useCVData(storageKey = 'cv_maker_data_v1') {
     const id = `cs_${Date.now()}`
     setWithHistory(prev => ({
       ...prev,
-      customSections: [...(prev.customSections || []), { id, title, entries: [] }]
+      customSections: [...(prev.customSections || []), { id, title, entries: [] }],
+      sectionConfig: {
+        ...prev.sectionConfig,
+        sectionOrder: [...(prev.sectionConfig?.sectionOrder || []), id]
+      }
     }))
     return id
   }, [setWithHistory])
@@ -219,8 +223,27 @@ export function useCVData(storageKey = 'cv_maker_data_v1') {
   const deleteCustomSection = useCallback((id) => {
     setWithHistory(prev => ({
       ...prev,
-      customSections: (prev.customSections || []).filter(s => s.id !== id)
+      customSections: (prev.customSections || []).filter(s => s.id !== id),
+      sectionConfig: {
+        ...prev.sectionConfig,
+        sectionOrder: (prev.sectionConfig?.sectionOrder || []).filter(sId => sId !== id)
+      }
     }))
+  }, [setWithHistory])
+
+  const reorderSectionConfig = useCallback((fromIndex, toIndex) => {
+    setWithHistory(prev => {
+      const arr = [...(prev.sectionConfig?.sectionOrder || [])]
+      const [moved] = arr.splice(fromIndex, 1)
+      arr.splice(toIndex, 0, moved)
+      return {
+        ...prev,
+        sectionConfig: {
+          ...prev.sectionConfig,
+          sectionOrder: arr
+        }
+      }
+    })
   }, [setWithHistory])
 
   // ── Generic CRUD for array sections (Built-in & Custom) ─────────────────
@@ -444,6 +467,7 @@ export function useCVData(storageKey = 'cv_maker_data_v1') {
     addCustomSection,
     updateCustomSection,
     deleteCustomSection,
+    reorderSectionConfig,
     // Import / Export
     exportJSON,
     importFile,

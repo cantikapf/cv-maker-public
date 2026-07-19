@@ -61,6 +61,7 @@ export default function EditorPanel({
   onAddCustomSection,
   onUpdateCustomSection,
   onDeleteCustomSection,
+  onReorderSectionConfig,
 }) {
   const [activeTab, setActiveTab] = useState('personal')
   const { personalInfo, sectionConfig = {}, customSections = [] } = cvData
@@ -92,10 +93,31 @@ export default function EditorPanel({
     { id: 'ai', label: 'AI Chat', icon: <RiRobot2Line />, isAI: true },
   ]
 
+  const sectionOrder = sectionConfig.sectionOrder || [
+    'workExperience',
+    'education',
+    'skills',
+    'languages',
+    'certifications',
+    'awards',
+    'publications',
+    'projects',
+    'organizationalExperience',
+  ]
+
   // Filter out hidden standard sections
-  const visibleBaseTabs = baseTabs.filter(tab => tab.id === 'personal' || !hiddenSections.includes(tab.id))
+  const dynamicTabs = sectionOrder
+    .filter((id) => !hiddenSections.includes(id))
+    .map((id) => {
+      const baseTab = baseTabs.find((t) => t.id === id)
+      if (baseTab) return baseTab
+      const customTab = customTabs.find((t) => t.id === id)
+      if (customTab) return customTab
+      return null
+    })
+    .filter(Boolean)
   
-  const tabsList = [...visibleBaseTabs, ...customTabs, ...extraTabs]
+  const tabsList = [baseTabs[0], ...dynamicTabs, ...extraTabs]
 
   const handleNavigateTab = (tabId, entryIndex) => {
     setActiveTab(tabId)
@@ -230,6 +252,7 @@ export default function EditorPanel({
               onAddCustomSection={onAddCustomSection}
               onUpdateCustomSection={onUpdateCustomSection}
               onDeleteCustomSection={onDeleteCustomSection}
+              onReorderSectionConfig={onReorderSectionConfig}
             />
           </div>
         )}
