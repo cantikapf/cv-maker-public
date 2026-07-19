@@ -1,0 +1,103 @@
+/* ============================================================
+   print.css — Applied ONLY when browser prints / exports PDF
+   ============================================================ */
+
+@media print {
+  /* Reset page for A4 with native page margins */
+  @page {
+    size: A4 portrait;
+    margin: 12mm 14mm;
+  }
+
+  /* Hide ALL UI except the CV document */
+  .toolbar,
+  .editor-panel,
+  .dialog-overlay,
+  .dialog,
+  .export-dialog,
+  .cv-preview-wrap > *:not(#cv-document) {
+    display: none !important;
+  }
+
+  /* Make CV fill the page */
+  html,
+  body,
+  #root {
+    width: auto !important;
+    height: auto !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    background: #fff !important;
+    overflow: visible !important;
+  }
+
+  .app,
+  .app__body,
+  .preview-panel {
+    display: block !important;
+    height: auto !important;
+    min-height: 0 !important;
+    overflow: visible !important;
+    position: static !important;
+    width: auto !important;
+    padding: 0 !important;
+    margin: 0 !important;
+  }
+
+  .cv-preview-wrap {
+    width: 100% !important;
+    min-height: 0 !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    background: #fff !important;
+    overflow: visible !important;
+    display: block !important;
+  }
+
+  #cv-document {
+    width: 100% !important;
+    min-height: 0 !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    box-shadow: none !important;
+    border: none !important;
+    background: #fff !important;
+    font-size: 9pt;
+    line-height: 1.4;
+    color: #000 !important;
+  }
+
+  /* Ensure photo prints correctly at 3:4 ratio matching screen dimensions */
+  .cv-header__photo {
+    width: 33mm !important;
+    height: 44mm !important;
+    object-fit: cover !important;
+    flex-shrink: 0 !important;
+    border: 1px solid #ccc !important;
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+  }
+
+  /* Prevent awkward page breaks inside entries */
+  .cv-entry,
+  .cv-section {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  /* Keep section headers with their first entry */
+  .cv-section__title {
+    break-after: avoid;
+    page-break-after: avoid;
+  }
+
+  /* Hyperlinks: show URL text in print */
+  a[href]::after {
+    content: none;
+  }
+
+  .cv-document .cv-link::after {
+    content: "" !important;
+    display: inline-block !important;
+  }
+}

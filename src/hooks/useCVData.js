@@ -1,0 +1,298 @@
+import { useState, useEffect, useCallback, useRef } from 'react'
+import { defaultCV } from '../data/defaultCV'
+import { downloadJSON } from '../utils/cvExport'
+
+const MAX_HISTORY = 50
+
+export function useCVData(storageKey = 'cv_maker_data_v1') {
+  const [cvData, setCvData] = useState(() => {
+    try {
+      const stored = localStorage.getItem(storageKey)
+      if (stored) {
+        const parsed = JSON.parse(stored)
+        let modified = false
+        // Migrate skills from object to array (architecture migration, v1.1 → v1.2)
+        if (parsed.skills && !Array.isArray(parsed.skills)) {
+          const newSkills = []
+          if (parsed.skills.technology) {
+            newSkills.push({ id: 'skill_' + Date.now() + '1', category: 'Technology Skills', items: parsed.skills.technology })
+          }
+          if (parsed.skills.businessProfessional) {
+            newSkills.push({ id: 'skill_' + Date.now() + '2', category: 'Business & Professional Skills', items: parsed.skills.businessProfessional })
+          }
+          parsed.skills = newSkills
+          modified = true
+        }
+
+        if (modified) {
+          localStorage.setItem(storageKey, JSON.stringify(parsed))
+        }
+        return parsed
+      }
+      return defaultCV
+    } catch {
+      return defaultCV
+    }
+  })
+
+  // ── Undo / Redo stacks (useRef — no re-render on push/pop) ──────────────
+  const undoStack = useRef([])
+  const redoStack = useRef([])
+  const [canUndo, setCanUndo] = useState(false)
+  const [canRedo, setCanRedo] = useState(false)
+
+  // Listen for storageKey changes (when user switches CV)
+  useEffect(() => {
+    try {
+      const stored = localStorage.getItem(storageKey)
+      if (stored) {
+        setCvData(JSON.parse(stored))
+      } else {
+        // If it's a new CV, use default
+        setCvData(defaultCV)
+      }
+    } catch {
+      setCvData(defaultCV)
+    }
+    // Clear history on switch
+    undoStack.current = []
+    redoStack.current = []
+    setCanUndo(false)
+    setCanRedo(false)
+  }, [storageKey])
+
+  // Auto-save to localStorage on every state change
+  useEffect(() => {
+    try {
+      localStorage.setItem(storageKey, JSON.stringify(cvData))
+    } catch (err) {
+      console.error('[useCVData] Failed to save to localStorage:', err)
+    }
+  }, [cvData, storageKey])
+
+  // ── History helpers ─────────────────────────────────────────────────────
+  /** Call BEFORE any state mutation to record current state */
+  const recordHistory = useCallback((currentState) => {
+    undoStack.current = [...undoStack.current, currentState].slice(-MAX_HISTORY)
+    redoStack.current = []
+    setCanUndo(true)
+    setCanRedo(false)
+  }, [])
+
+  /** Wrap setCvData so history is always recorded first */
+  const setWithHistory = useCallback((updater) => {
+    setCvData(prev => {
+      recordHistory(prev)
+      return typeof updater === 'function' ? updater(prev) : updater
+    })
+  }, [recordHistory])
+
+  const undo = useCallback(() => {
+    if (!undoStack.current.length) return
+    setCvData(prev => {
+      const past = [...undoStack.current]
+      const target = past.pop()
+      undoStack.current = past
+      redoStack.current = [prev, ...redoStack.current].slice(0, MAX_HISTORY)
+      setCanUndo(past.length > 0)
+      setCanRedo(true)
+      return target
+    })
+  }, [])
+
+  const redo = useCallback(() => {
+    if (!redoStack.current.length) return
+    setCvData(prev => {
+      const future = [...redoStack.current]
+      const target = future.shift()
+      redoStack.current = future
+      undoStack.current = [...undoStack.current, prev].slice(-MAX_HISTORY)
+      setCanRedo(future.length > 0)
+      setCanUndo(true)
+      return target
+    })
+  }, [])
+
+  // ── Personal Info ───────────────────────────────────────────────────────
+  const updatePersonalInfo = useCallback((field, value) => {
+    setWithHistory(prev => ({
+      ...prev,
+      personalInfo: { ...prev.personalInfo, [field]: value },
+    }))
+  }, [setWithHistory])
+
+  // ── Generic CRUD for array sections ────────────────────────────────────
+  const addEntry = useCallback((section, entry) => {
+    const id = `${section}_${Date.now()}`
+    setWithHistory(prev => ({
+      ...prev,
+      [section]: [...prev[section], { ...entry, id }],
+    }))
+    return id
+  }, [setWithHistory])
+
+  const updateEntry = useCallback((section, id, updatedFields) => {
+    setWithHistory(prev => ({
+      ...prev,
+      [section]: prev[section].map(item =>
+        item.id === id ? { ...item, ...updatedFields } : item
+      ),
+    }))
+  }, [setWithHistory])
+
+  const deleteEntry = useCallback((section, id) => {
+    setWithHistory(prev => ({
+      ...prev,
+      [section]: prev[section].filter(item => item.id !== id),
+    }))
+  }, [setWithHistory])
+
+  const reorderEntries = useCallback((section, fromIndex, toIndex) => {
+    setWithHistory(prev => {
+      const arr = [...prev[section]]
+      const [moved] = arr.splice(fromIndex, 1)
+      arr.splice(toIndex, 0, moved)
+      return { ...prev, [section]: arr }
+    })
+  }, [setWithHistory])
+
+  const reorderSection = useCallback((section, newIdOrder) => {
+    setWithHistory(prev => {
+      if (!Array.isArray(prev[section]) || !Array.isArray(newIdOrder)) return prev
+      const currentItems = [...prev[section]]
+      const newItems = []
+      newIdOrder.forEach(id => {
+        const item = currentItems.find(i => i.id === id)
+        if (item) newItems.push(item)
+      })
+      // Append any items the AI might have missed
+      currentItems.forEach(item => {
+        if (!newItems.find(i => i.id === item.id)) {
+          newItems.push(item)
+        }
+      })
+      return { ...prev, [section]: newItems }
+    })
+  }, [setWithHistory])
+
+  // ── AI Patch Applicator ─────────────────────────────────────────────────
+  // Single pipeline: AI → applyPatch → useCVData → re-render
+  const applyPatch = useCallback(
+    (patch) => {
+      const { action, section, targetId, data, updates } = patch
+      if (!action || action === 'none') return
+
+      // Helper: apply a single update operation
+      const applySingle = (op) => {
+        const { action: opAction, section: opSection, targetId: opTargetId, data: opData } = op
+        const effectiveAction = opAction || 'update'
+        if (effectiveAction === 'add') {
+          addEntry(opSection, opData)
+        } else if (effectiveAction === 'update' || effectiveAction === 'improve' || effectiveAction === 'update') {
+          if (opSection === 'personalInfo') {
+            Object.entries(opData).forEach(([k, v]) => updatePersonalInfo(k, v))
+          } else {
+            updateEntry(opSection, opTargetId, opData)
+          }
+        } else if (effectiveAction === 'delete') {
+          deleteEntry(opSection, opTargetId)
+        }
+      }
+
+      if (action === 'batch_update') {
+        // Apply each update in the batch sequentially
+        if (Array.isArray(updates)) {
+          updates.forEach(op => applySingle(op))
+        }
+      } else if (action === 'add') {
+        addEntry(section, data)
+      } else if (action === 'update' || action === 'improve') {
+        if (section === 'personalInfo') {
+          Object.entries(data).forEach(([k, v]) => updatePersonalInfo(k, v))
+        } else {
+          updateEntry(section, targetId, data)
+        }
+      } else if (action === 'delete') {
+        deleteEntry(section, targetId)
+      } else if (action === 'reorder') {
+        reorderSection(section, data)
+      }
+    },
+    [addEntry, updateEntry, deleteEntry, updatePersonalInfo, reorderSection]
+  )
+
+  // ── Export JSON (with naming convention) ───────────────────────────────
+  const exportJSON = useCallback((date) => {
+    downloadJSON(cvData, cvData.personalInfo?.name, date)
+  }, [cvData])
+
+  // ── Import JSON / PDF ───────────────────────────────────────────────────
+  const importFile = useCallback(async (file) => {
+    return new Promise((resolve, reject) => {
+      // Determine file type
+      const isPDF = file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf')
+      
+      if (isPDF) {
+        // PDF flow
+        import('../utils/pdfParser').then(async ({ extractTextFromPDF }) => {
+          try {
+            console.log('Extracting text from PDF...')
+            const rawText = await extractTextFromPDF(file)
+            console.log('PDF Extracted Text length:', rawText.length)
+            
+            const { callCVImportMapper } = await import('../utils/groqClient')
+            const parsed = await callCVImportMapper(rawText)
+
+            recordHistory(cvData)
+            setCvData(parsed)
+            resolve()
+          } catch (err) {
+            reject(err)
+          }
+        }).catch(err => reject(new Error('Gagal memuat modul PDF Parser.')))
+      } else {
+        // JSON flow
+        const reader = new FileReader()
+        reader.onload = async (e) => {
+          try {
+            const { processImportedJSON } = await import('../utils/cvImportMapper')
+            const parsed = await processImportedJSON(e.target.result)
+            
+            recordHistory(cvData)
+            setCvData(parsed)
+            resolve()
+          } catch (err) {
+            reject(err)
+          }
+        }
+        reader.onerror = () => reject(new Error('Gagal membaca file'))
+        reader.readAsText(file)
+      }
+    })
+  }, [cvData, recordHistory])
+
+  const resetToDefault = useCallback(() => {
+    recordHistory(cvData)
+    setCvData(defaultCV)
+  }, [cvData, recordHistory])
+
+  return {
+    cvData,
+    // Undo / Redo
+    undo,
+    redo,
+    canUndo,
+    canRedo,
+    // CRUD
+    updatePersonalInfo,
+    addEntry,
+    updateEntry,
+    deleteEntry,
+    reorderEntries,
+    applyPatch,
+    // Import / Export
+    exportJSON,
+    importFile,
+    resetToDefault,
+  }
+}
