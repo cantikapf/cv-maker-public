@@ -197,6 +197,29 @@ export default function CVPreview({ cvData }) {
             ))}
           </CVSection>
         )}
+
+        {/* ── CUSTOM SECTIONS ── */}
+        {cvData.customSections?.map((customSec) => {
+          if (!customSec.entries || customSec.entries.length === 0) return null;
+          return (
+            <CVSection key={customSec.id} title={customSec.title}>
+              {customSec.entries.map((entry) => (
+                <div key={entry.id}>
+                  <EntryRow
+                    title={entry.jobTitle || entry.title || entry.name}
+                    subtitle={entry.company || entry.subtitle || entry.institution}
+                    location={entry.location}
+                    startDate={entry.startDate || entry.date}
+                    endDate={entry.endDate}
+                    extra={entry.extra || entry.gpa}
+                  />
+                  {entry.description && <p className="cv-entry__desc">{parseMarkdown(entry.description)}</p>}
+                  <BulletList bullets={entry.bullets} />
+                </div>
+              ))}
+            </CVSection>
+          );
+        })}
       </div>
     </div>
   )

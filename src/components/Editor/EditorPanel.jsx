@@ -12,6 +12,8 @@ import {
   RiTeamLine,
   RiRobot2Line,
   RiBarChart2Line,
+  RiSettings4Line,
+  RiFileList3Line,
 } from 'react-icons/ri'
 import SectionEditor from './SectionEditor'
 import ProfilePhotoEditor from './ProfilePhotoEditor'
@@ -19,6 +21,7 @@ import AIChat from './AIChat'
 import ResumeScorePanel from '../UI/ResumeScorePanel'
 import JobMatcher from '../UI/JobMatcher'
 import SummaryAIDropdown from '../UI/SummaryAIDropdown'
+import SectionManager from './SectionManager'
 
 const ARRAY_SECTIONS = [
   'workExperience',
@@ -54,11 +57,16 @@ export default function EditorPanel({
   onAISummaryAction,
   onApplySummary,
   onAnalyzeRepo,
+  onToggleSectionVisibility,
+  onAddCustomSection,
+  onUpdateCustomSection,
+  onDeleteCustomSection,
 }) {
   const [activeTab, setActiveTab] = useState('personal')
-  const { personalInfo } = cvData
+  const { personalInfo, sectionConfig = {}, customSections = [] } = cvData
+  const hiddenSections = sectionConfig.hiddenSections || []
 
-  const tabsList = [
+  const baseTabs = [
     { id: 'personal', label: 'Profil', icon: <RiUser3Line /> },
     { id: 'workExperience', label: 'Pekerjaan', icon: <RiBriefcaseLine /> },
     { id: 'education', label: 'Pendidikan', icon: <RiGraduationCapLine /> },
@@ -69,9 +77,25 @@ export default function EditorPanel({
     { id: 'publications', label: 'Publikasi', icon: <RiArticleLine /> },
     { id: 'projects', label: 'Proyek', icon: <RiCodeSSlashLine /> },
     { id: 'organizationalExperience', label: 'Organisasi', icon: <RiTeamLine /> },
+  ]
+
+  const customTabs = customSections.map((sec) => ({
+    id: sec.id,
+    label: sec.title,
+    icon: <RiFileList3Line />,
+    isCustom: true,
+  }))
+
+  const extraTabs = [
     { id: 'score', label: `Skor CV (${scoreData?.total ?? 0})`, icon: <RiBarChart2Line /> },
+    { id: 'sectionSettings', label: 'Pengaturan', icon: <RiSettings4Line />, isSettings: true },
     { id: 'ai', label: 'AI Chat', icon: <RiRobot2Line />, isAI: true },
   ]
+
+  // Filter out hidden standard sections
+  const visibleBaseTabs = baseTabs.filter(tab => tab.id === 'personal' || !hiddenSections.includes(tab.id))
+  
+  const tabsList = [...visibleBaseTabs, ...customTabs, ...extraTabs]
 
   const handleNavigateTab = (tabId, entryIndex) => {
     setActiveTab(tabId)
@@ -90,6 +114,10 @@ export default function EditorPanel({
     }
   }
 
+  // Check if active tab is a custom section
+  const isCustomTabActive = activeTab.startsWith('cs_')
+  const activeCustomSection = isCustomTabActive ? customSections.find(s => s.id === activeTab) : null
+
   return (
     <aside className="editor-panel">
       {/* Tab Navigation */}
@@ -97,7 +125,7 @@ export default function EditorPanel({
         {tabsList.map((tab) => (
           <button
             key={tab.id}
-            className={`editor-tabs__tab ${activeTab === tab.id ? 'editor-tabs__tab--active' : ''} ${tab.isAI ? 'editor-tabs__tab--ai' : ''} ${tab.id === 'score' ? 'editor-tabs__tab--score' : ''}`}
+            className={`editor-tabs__tab ${activeTab === tab.id ? 'editor-tabs__tab--active' : ''} ${tab.isAI ? 'editor-tabs__tab--ai' : ''} ${tab.id === 'score' ? 'editor-tabs__tab--score' : ''} ${tab.isSettings ? 'editor-tabs__tab--settings' : ''}`}
             onClick={() => setActiveTab(tab.id)}
             title={tab.label}
           >
@@ -157,7 +185,7 @@ export default function EditorPanel({
           </div>
         )}
 
-        {/* ── Array Sections ── */}
+        {/* ── Array Sections (Standard) ── */}
         {ARRAY_SECTIONS.includes(activeTab) && (
           <div className="editor-content__section">
             <h3 className="editor-content__heading">
@@ -171,6 +199,37 @@ export default function EditorPanel({
               onDelete={onDelete}
               onReorder={onReorder}
               onAnalyzeRepo={onAnalyzeRepo}
+            />
+          </div>
+        )}
+
+        {/* ── Custom Sections ── */}
+        {isCustomTabActive && activeCustomSection && (
+          <div className="editor-content__section">
+            <h3 className="editor-content__heading">
+              {activeCustomSection.title}
+            </h3>
+            <SectionEditor
+              section={activeCustomSection.id}
+              entries={activeCustomSection.entries || []}
+              onAdd={onAdd}
+              onUpdate={onUpdate}
+              onDelete={onDelete}
+              onReorder={onReorder}
+            />
+          </div>
+        )}
+
+        {/* ── Section Manager ── */}
+        {activeTab === 'sectionSettings' && (
+          <div className="editor-content__section">
+            <h3 className="editor-content__heading">Manajemen Section</h3>
+            <SectionManager
+              cvData={cvData}
+              onToggleSectionVisibility={onToggleSectionVisibility}
+              onAddCustomSection={onAddCustomSection}
+              onUpdateCustomSection={onUpdateCustomSection}
+              onDeleteCustomSection={onDeleteCustomSection}
             />
           </div>
         )}

@@ -326,7 +326,25 @@ function EntryCard({ entry, config, onUpdate, onDelete, onMoveUp, onMoveDown, sh
 
 /* ── Main SectionEditor ───────────────────────────────────── */
 export default function SectionEditor({ section, entries, onAdd, onUpdate, onDelete, onReorder, onAnalyzeRepo }) {
-  const config = SECTION_CONFIG[section]
+  let config = SECTION_CONFIG[section]
+  
+  if (section.startsWith('cs_')) {
+    config = {
+      titleKey: 'title',
+      subtitleKey: 'subtitle',
+      fields: [
+        { key: 'title', label: 'Title / Role / Name', type: 'text', required: true },
+        { key: 'subtitle', label: 'Subtitle / Company / Institution', type: 'text' },
+        { key: 'location', label: 'Location', type: 'text' },
+        { key: 'startDate', label: 'Start Date', type: 'text', placeholder: 'e.g. Jan 2023' },
+        { key: 'endDate', label: 'End Date', type: 'text', placeholder: 'e.g. Dec 2023' },
+        { key: 'description', label: 'Description', type: 'textarea' },
+      ],
+      hasBullets: true,
+      emptyEntry: { title: '', subtitle: '', location: '', startDate: '', endDate: '', description: '', bullets: [] },
+    }
+  }
+
   if (!config) return null
 
   const handleAdd = () => {
