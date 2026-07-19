@@ -102,4 +102,10 @@ export const defaultCV = {
       link: 'janedoe.design/ecotrack'
     }
   ],
+
+  customSections: [],
+  
+  sectionConfig: {
+    hiddenSections: [], // array of section IDs (e.g., 'publications') that are hidden from the editor tabs
+  }
 }

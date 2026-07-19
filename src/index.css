@@ -2291,4 +2291,73 @@ html, body, #root {
   gap: var(--s2);
 }
 
+/* ── Section Manager ──────────────────────────────────────── */
+.section-manager {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s6);
+}
+
+.section-manager__block {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s3);
+  padding-bottom: var(--s4);
+  border-bottom: 1px solid var(--border);
+}
+
+.section-manager__title {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.section-manager__desc {
+  font-size: 12px;
+  color: var(--text-secondary);
+  line-height: 1.5;
+}
+
+.section-manager__list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s2);
+  margin-top: var(--s2);
+}
+
+.section-manager__item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--s2) var(--s3);
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--r-sm);
+  transition: all var(--t);
+}
+.section-manager__item:hover {
+  border-color: var(--border-focus);
+}
+
+.section-manager__label {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-primary);
+}
+.section-manager__label--hidden {
+  color: var(--text-muted);
+  text-decoration: line-through;
+}
+
+.section-manager__form {
+  display: flex;
+  gap: var(--s2);
+  margin-top: var(--s2);
+}
+
+.section-manager__actions {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
 
