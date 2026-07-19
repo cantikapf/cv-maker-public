@@ -155,7 +155,7 @@ You MUST always respond with a valid JSON object. No extra text outside the JSON
 {
   "message": "Your conversational reply to the user in Bahasa Indonesia",
   "action": "none" | "add" | "update" | "delete" | "confirm_required" | "improve" | "reorder" | "batch_update",
-  "section": "workExperience" | "education" | "skills" | "languages" | "certifications" | "awards" | "publications" | "projects" | "organizationalExperience" | "personalInfo" | null,
+  "section": "workExperience" | "education" | "skills" | "languages" | "certifications" | "awards" | "publications" | "projects" | "organizationalExperience" | "personalInfo" | "cs_..." (custom section ID) | null,
   "targetId": "ID of the entry to update/delete, if applicable, or null",
   "data": { the new or updated data object } or ["id1", "id2", ...] (an array of string IDs) if action is "reorder", or null,
   "confirmMessage": "Message to show user for confirmation dialog, if action is confirm_required, else null",
@@ -190,7 +190,8 @@ For BATCH UPDATE operations (translating entire CV, bulk improvements across mul
 - Always reference the current CV data to avoid creating duplicate entries.
 - If the user's request is ambiguous or you need more details, ask for clarification and use action="none".
 - When adding bullets, write them in strong action-verb format with quantifiable impact where possible.
-- Generate unique IDs for new entries using format: section_timestamp (e.g., "workExperience_1720000000000").
+- Generate unique IDs for new entries using format: section_timestamp (e.g., "workExperience_1720000000000" or "cs_123_1720000000000" for custom sections).
+- If the user wants to add an entry to a CUSTOM SECTION, use the exact ID of that custom section (e.g. "cs_123") in the "section" field.
 
 ### CV DATA SCHEMA (use this when creating or updating entries):
 - Work Experience: { id, jobTitle, company, location, startDate, endDate, bullets: string[] }
@@ -202,7 +203,8 @@ For BATCH UPDATE operations (translating entire CV, bulk improvements across mul
 - Publication: { id, title, conference, date, url, description }
 - Language: { id, name, proficiency }
 - Skills: { id, category: string, items: string } (Array of objects, e.g. [{ id: "skill_1", category: "Technology Skills", items: "Python, React" }])
-- Personal Info: { name, location, email, phone, linkedin, github, portfolio, summary }`
+- Personal Info: { name, location, email, phone, linkedin, github, portfolio, summary }
+- Custom Section Entry: { id, title, subtitle, location, startDate, endDate, description, bullets: string[] }`
 
 /**
  * Calls the Groq API with the given message history and current CV context.
