@@ -68,3 +68,61 @@ Jika ada task besar, selalu kerjakan dalam urutan ini:
 4. Styling (`index.css`, lalu `print.css`)
 5. Verification
 6. Update `CHANGELOG.md`
+
+---
+
+## Aturan Git Branch: Public vs Personal
+
+Project ini menggunakan dua branch dengan tujuan berbeda:
+
+| Branch | Tujuan | Yang Berbeda |
+|--------|--------|-------------|
+| `main` | Versi publik — di-deploy ke hosting publik | `defaultCV.js` berisi template placeholder generik |
+| `personal` | Versi pribadi — hanya dipakai secara lokal atau di-deploy ke instansi private | `defaultCV.js` berisi data CV pribadi pemilik |
+
+### Aturan Ketat untuk Agent
+
+1. **JANGAN PERNAH** commit data pribadi (nama, email, nomor telepon, URL personal) ke branch `main`.
+2. **JANGAN PERNAH** push branch `personal` ke remote GitHub yang bersifat publik.
+3. Sebelum melakukan perubahan pada `defaultCV.js`, SELALU periksa branch yang aktif dengan `git branch`.
+4. Jika agent diminta mengedit `defaultCV.js` dan sedang di branch `main`, isi HANYA dengan data placeholder/generik.
+5. Jika agent diminta mengedit `defaultCV.js` dan sedang di branch `personal`, boleh menggunakan data pribadi pemilik.
+
+### Alur Update Fitur Baru (Wajib Diikuti)
+
+Ketika ada fitur baru atau bug fix yang harus ada di **kedua** versi:
+
+```
+1. Pastikan aktif di branch `main`:
+   git checkout main
+
+2. Buat semua perubahan fitur di `main` (TANPA menyentuh defaultCV.js personal)
+
+3. Commit di `main`:
+   git commit -m "feat/fix: [deskripsi perubahan]"
+
+4. Pindah ke `personal` dan merge:
+   git checkout personal
+   git merge main
+
+5. Resolve conflict HANYA di `defaultCV.js` — selalu pertahankan versi `personal`.
+
+6. Commit merge di `personal`:
+   git commit -m "merge: sync feature from main"
+```
+
+### File yang HANYA Boleh Berbeda Antar Branch
+
+Hanya satu file yang boleh berbeda antara `main` dan `personal`:
+- `src/data/defaultCV.js`
+
+Semua file lain (komponen, hooks, utils, CSS) HARUS identik di kedua branch. Jika ada perbedaan selain di file tersebut, itu adalah bug yang harus segera diperbaiki.
+
+### Cara Memeriksa Status Branch Sebelum Commit
+
+Sebelum melakukan `git add` dan `git commit` manapun, agent WAJIB menjalankan:
+```
+git branch
+git diff --name-only HEAD
+```
+Pastikan branch aktif sesuai konteks perubahan yang diminta.

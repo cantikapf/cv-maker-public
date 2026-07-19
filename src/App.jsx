@@ -2,14 +2,18 @@ import { useCallback, useEffect, useState } from 'react'
 import { useCVData } from './hooks/useCVData'
 import { useCVLibrary } from './hooks/useCVLibrary'
 import { useAI } from './hooks/useAI'
+import { useAuth } from './hooks/useAuth'
 import Toolbar from './components/UI/Toolbar'
 import EditorPanel from './components/Editor/EditorPanel'
 import CVPreview from './components/Preview/CVPreview'
 import ExportDialog from './components/UI/ExportDialog'
 import CVLibraryPanel from './components/UI/CVLibraryPanel'
+import LoginPage from './components/UI/LoginPage'
 import { scoreCV } from './utils/scoreEngine'
 
 export default function App() {
+  const { user, loading, signOut } = useAuth()
+  
   const {
     cvList,
     activeCvId,
@@ -187,6 +191,14 @@ export default function App() {
     }
   }, [resetToDefault])
 
+  if (loading) {
+    return <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', backgroundColor: 'var(--bg-primary)', color: 'var(--text-primary)' }}>Memuat...</div>
+  }
+
+  if (!user) {
+    return <LoginPage />
+  }
+
   return (
     <div className="app">
       <Toolbar
@@ -199,6 +211,8 @@ export default function App() {
         onRedo={redo}
         canUndo={canUndo}
         canRedo={canRedo}
+        onSignOut={signOut}
+        user={user}
       />
 
       <main className="app__body">

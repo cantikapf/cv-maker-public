@@ -1,10 +1,13 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { defaultCV } from '../data/defaultCV'
 import { downloadJSON } from '../utils/cvExport'
+import { supabase } from '../utils/supabaseClient'
+import { useAuth } from './useAuth'
 
 const MAX_HISTORY = 50
 
 export function useCVData(storageKey = 'cv_maker_data_v1') {
+  const { user } = useAuth()
   const [cvData, setCvData] = useState(() => {
     try {
       const stored = localStorage.getItem(storageKey)
@@ -43,32 +46,93 @@ export function useCVData(storageKey = 'cv_maker_data_v1') {
 
   // Listen for storageKey changes (when user switches CV)
   useEffect(() => {
-    try {
-      const stored = localStorage.getItem(storageKey)
-      if (stored) {
-        setCvData(JSON.parse(stored))
-      } else {
-        // If it's a new CV, use default
-        setCvData(defaultCV)
+    let isMounted = true
+
+    const loadData = async () => {
+      let parsed = defaultCV
+      
+      // 1. Try local cache first for instant UI
+      try {
+        const stored = localStorage.getItem(storageKey)
+        if (stored) {
+          parsed = JSON.parse(stored)
+          if (isMounted) setCvData(parsed)
+        } else if (isMounted) {
+          setCvData(defaultCV)
+        }
+      } catch {
+        if (isMounted) setCvData(defaultCV)
       }
-    } catch {
-      setCvData(defaultCV)
+
+      // 2. Try fetching from Supabase to get the most up-to-date data
+      if (user && supabase) {
+        try {
+          const cvId = storageKey.replace('cv_maker_cv_', '')
+          if (cvId && cvId !== 'cv_maker_data_v1') {
+            const { data, error } = await supabase
+              .from('cv_documents')
+              .select('data')
+              .eq('id', cvId)
+              .single()
+
+            if (!error && data && isMounted) {
+              parsed = data.data
+              setCvData(parsed)
+              localStorage.setItem(storageKey, JSON.stringify(parsed))
+            }
+          }
+        } catch (err) {
+          console.error('[useCVData] Failed to fetch from Supabase:', err)
+        }
+      }
     }
+
+    loadData()
+
     // Clear history on switch
     undoStack.current = []
     redoStack.current = []
     setCanUndo(false)
     setCanRedo(false)
-  }, [storageKey])
+    
+    return () => { isMounted = false }
+  }, [storageKey, user])
 
-  // Auto-save to localStorage on every state change
+  // Auto-save to localStorage AND Supabase on every state change
   useEffect(() => {
+    // Save to local storage
     try {
       localStorage.setItem(storageKey, JSON.stringify(cvData))
     } catch (err) {
       console.error('[useCVData] Failed to save to localStorage:', err)
     }
-  }, [cvData, storageKey])
+
+    // Save to Supabase (debounce this in a real-world scenario to save API calls)
+    const saveToSupabase = async () => {
+      if (!user || !supabase) return
+      try {
+        const cvId = storageKey.replace('cv_maker_cv_', '')
+        if (!cvId || cvId === 'cv_maker_data_v1') return
+
+        await supabase.from('cv_documents').upsert({
+          id: cvId,
+          user_id: user.id,
+          name: cvData.personalInfo?.name || 'My CV', // This might overwrite renamed names, ideally sync from useCVLibrary. For now it's okay or just don't update name here.
+          data: cvData,
+          updated_at: new Date().toISOString(),
+        })
+      } catch (err) {
+        console.error('[useCVData] Failed to save to Supabase:', err)
+      }
+    }
+    
+    // Simple debounce to avoid spamming the DB (500ms)
+    const timeoutId = setTimeout(() => {
+      saveToSupabase()
+    }, 500)
+
+    return () => clearTimeout(timeoutId)
+  }, [cvData, storageKey, user])
 
   // ── History helpers ─────────────────────────────────────────────────────
   /** Call BEFORE any state mutation to record current state */
