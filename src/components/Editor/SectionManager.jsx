@@ -1,25 +1,34 @@
 import React, { useState } from 'react'
-import { RiAddLine, RiDeleteBinLine, RiEditLine, RiEyeFill, RiEyeOffFill } from 'react-icons/ri'
+import {
+  RiAddLine,
+  RiDeleteBinLine,
+  RiEditLine,
+  RiEyeFill,
+  RiEyeOffFill,
+  RiArrowUpLine,
+  RiArrowDownLine,
+} from 'react-icons/ri'
 
-// Standard sections that can be toggled
-const STANDARD_SECTIONS = [
-  { id: 'workExperience', label: 'Pekerjaan' },
-  { id: 'education', label: 'Pendidikan' },
-  { id: 'skills', label: 'Skills' },
-  { id: 'languages', label: 'Bahasa' },
-  { id: 'certifications', label: 'Sertifikasi' },
-  { id: 'awards', label: 'Penghargaan' },
-  { id: 'publications', label: 'Publikasi' },
-  { id: 'projects', label: 'Proyek' },
-  { id: 'organizationalExperience', label: 'Organisasi' },
-]
+// Standard sections labels
+const STANDARD_LABELS = {
+  workExperience: 'Pekerjaan',
+  education: 'Pendidikan',
+  skills: 'Skills',
+  languages: 'Bahasa',
+  certifications: 'Sertifikasi',
+  awards: 'Penghargaan',
+  publications: 'Publikasi',
+  projects: 'Proyek',
+  organizationalExperience: 'Organisasi',
+}
 
 export default function SectionManager({
   cvData,
   onToggleSectionVisibility,
   onAddCustomSection,
   onUpdateCustomSection,
-  onDeleteCustomSection
+  onDeleteCustomSection,
+  onReorderSectionConfig,
 }) {
   const [newSectionName, setNewSectionName] = useState('')
   const [editingId, setEditingId] = useState(null)
@@ -27,6 +36,7 @@ export default function SectionManager({
 
   const hiddenSections = cvData.sectionConfig?.hiddenSections || []
   const customSections = cvData.customSections || []
+  const sectionOrder = cvData.sectionConfig?.sectionOrder || Object.keys(STANDARD_LABELS)
 
   const handleAdd = (e) => {
     e.preventDefault()
@@ -46,25 +56,94 @@ export default function SectionManager({
   return (
     <div className="section-manager">
       <div className="section-manager__block">
-        <h4 className="section-manager__title">Section Bawaan</h4>
+        <h4 className="section-manager__title">Urutan & Visibilitas Section</h4>
         <p className="section-manager__desc">
-          Sembunyikan section yang tidak Anda butuhkan agar tidak memenuhi Editor.
+          Atur urutan section yang akan dicetak di PDF menggunakan tombol panah, atau sembunyikan section menggunakan ikon mata.
         </p>
         <div className="section-manager__list">
-          {STANDARD_SECTIONS.map((sec) => {
-            const isHidden = hiddenSections.includes(sec.id)
+          {sectionOrder.map((secId, index) => {
+            const isCustom = secId.startsWith('cs_')
+            const customSec = isCustom ? customSections.find((s) => s.id === secId) : null
+            const label = isCustom ? customSec?.title : STANDARD_LABELS[secId]
+            const isHidden = hiddenSections.includes(secId)
+
+            if (!label && !isCustom) return null // Edge case: invalid standard section
+
             return (
-              <div key={sec.id} className="section-manager__item">
-                <span className={`section-manager__label ${isHidden ? 'section-manager__label--hidden' : ''}`}>
-                  {sec.label}
-                </span>
-                <button
-                  className={`btn-icon ${isHidden ? 'btn-icon--hidden' : 'btn-icon--visible'}`}
-                  onClick={() => onToggleSectionVisibility(sec.id)}
-                  title={isHidden ? 'Tampilkan' : 'Sembunyikan'}
-                >
-                  {isHidden ? <RiEyeOffFill /> : <RiEyeFill />}
-                </button>
+              <div key={secId} className="section-manager__item">
+                {/* ── ARROW CONTROLS ── */}
+                <div className="section-manager__arrows">
+                  <button
+                    className="btn-icon btn-icon--small"
+                    onClick={() => onReorderSectionConfig(index, index - 1)}
+                    disabled={index === 0}
+                    title="Geser ke Atas"
+                  >
+                    <RiArrowUpLine />
+                  </button>
+                  <button
+                    className="btn-icon btn-icon--small"
+                    onClick={() => onReorderSectionConfig(index, index + 1)}
+                    disabled={index === sectionOrder.length - 1}
+                    title="Geser ke Bawah"
+                  >
+                    <RiArrowDownLine />
+                  </button>
+                </div>
+
+                {/* ── LABEL / EDIT ── */}
+                {editingId === secId && isCustom ? (
+                  <input
+                    type="text"
+                    className="field__input field__input--small section-manager__label-input"
+                    value={editingName}
+                    onChange={(e) => setEditingName(e.target.value)}
+                    onBlur={() => handleSaveEdit(secId)}
+                    onKeyDown={(e) => e.key === 'Enter' && handleSaveEdit(secId)}
+                    autoFocus
+                  />
+                ) : (
+                  <span className={`section-manager__label ${isHidden ? 'section-manager__label--hidden' : ''}`}>
+                    {label || '(Tidak Bernama)'}
+                    {isCustom && <span className="section-manager__badge">Custom</span>}
+                  </span>
+                )}
+
+                {/* ── ACTIONS ── */}
+                <div className="section-manager__actions">
+                  {isCustom && (
+                    <>
+                      <button
+                        className="btn-icon"
+                        onClick={() => {
+                          setEditingId(secId)
+                          setEditingName(label)
+                        }}
+                        title="Ubah Nama"
+                      >
+                        <RiEditLine />
+                      </button>
+                      <button
+                        className="btn-icon btn-icon--danger"
+                        onClick={() => {
+                          if (window.confirm(`Hapus section "${label}" beserta seluruh isinya?`)) {
+                            onDeleteCustomSection(secId)
+                          }
+                        }}
+                        title="Hapus"
+                      >
+                        <RiDeleteBinLine />
+                      </button>
+                    </>
+                  )}
+                  <button
+                    className={`btn-icon ${isHidden ? 'btn-icon--hidden' : 'btn-icon--visible'}`}
+                    onClick={() => onToggleSectionVisibility(secId)}
+                    title={isHidden ? 'Tampilkan' : 'Sembunyikan'}
+                  >
+                    {isHidden ? <RiEyeOffFill /> : <RiEyeFill />}
+                  </button>
+                </div>
               </div>
             )
           })}
@@ -72,9 +151,9 @@ export default function SectionManager({
       </div>
 
       <div className="section-manager__block">
-        <h4 className="section-manager__title">Custom Sections</h4>
+        <h4 className="section-manager__title">Buat Custom Section</h4>
         <p className="section-manager__desc">
-          Tambahkan section baru sesuai kebutuhan (misal: "Hobi", "Pengalaman Relawan").
+          Tambahkan section baru secara dinamis (misal: "Hobi", "Pengalaman Relawan"). Section baru otomatis akan ditambahkan di urutan paling bawah.
         </p>
         
         <form className="section-manager__form" onSubmit={handleAdd}>
@@ -89,52 +168,6 @@ export default function SectionManager({
             <RiAddLine /> Tambah
           </button>
         </form>
-
-        {customSections.length > 0 && (
-          <div className="section-manager__list">
-            {customSections.map((sec) => (
-              <div key={sec.id} className="section-manager__item">
-                {editingId === sec.id ? (
-                  <input
-                    type="text"
-                    className="field__input field__input--small"
-                    value={editingName}
-                    onChange={(e) => setEditingName(e.target.value)}
-                    onBlur={() => handleSaveEdit(sec.id)}
-                    onKeyDown={(e) => e.key === 'Enter' && handleSaveEdit(sec.id)}
-                    autoFocus
-                  />
-                ) : (
-                  <span className="section-manager__label">{sec.title}</span>
-                )}
-                
-                <div className="section-manager__actions">
-                  <button
-                    className="btn-icon"
-                    onClick={() => {
-                      setEditingId(sec.id)
-                      setEditingName(sec.title)
-                    }}
-                    title="Ubah Nama"
-                  >
-                    <RiEditLine />
-                  </button>
-                  <button
-                    className="btn-icon btn-icon--danger"
-                    onClick={() => {
-                      if (window.confirm(`Hapus section "${sec.title}" beserta seluruh isinya?`)) {
-                        onDeleteCustomSection(sec.id)
-                      }
-                    }}
-                    title="Hapus"
-                  >
-                    <RiDeleteBinLine />
-                  </button>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
       </div>
     </div>
   )

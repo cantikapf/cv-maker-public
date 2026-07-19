@@ -56,13 +56,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [1.4.0] - 2026-07-19
 ### Added
+- **Dynamic Section Reordering** — Pengguna kini dapat mengatur urutan seluruh *section* (baik bawaan maupun kustom) sesuai keinginan, langsung dari tab "Pengaturan" menggunakan tombol panah atas/bawah. Pembaruan urutan ini akan secara dinamis di-render ulang di tab navigasi sisi kiri dan di tampilan *PDF Preview*.
 - **Customizable Sections (Section Manager)** — Menambahkan fitur manajemen section yang memungkinkan pengguna untuk menyembunyikan/menampilkan section bawaan dan membuat *Custom Section* baru (misal: "Pengalaman Relawan", "Hobi") dengan judul bebas.
-- **SectionManager Component** — Antarmuka pengguna baru di EditorPanel untuk mengatur visibilitas section dan mengelola section kustom (tambah, edit nama, hapus).
+- **SectionManager Component** — Antarmuka pengguna baru di EditorPanel untuk mengatur urutan (drag/klik panah), mengatur visibilitas section, dan mengelola section kustom (tambah, edit nama, hapus) dalam satu daftar terpadu yang sinkron dengan tampilan cetak.
 - Dukungan *Custom Sections* di dalam **AI Chat** (`groqClient.js`). AI kini dapat memahami, mengedit, menambah, atau menghapus entri di dalam *Custom Sections* jika diminta oleh pengguna.
 
 ### Changed
-- Refaktor `useCVData.js` untuk mendukung operasi CRUD secara dinamis tidak hanya pada *section* bawaan, tetapi juga pada *custom sections* yang terdaftar di state `cvData.customSections`.
-- Pembaruan rendering `CVPreview.jsx` untuk mendeteksi dan menampilkan *custom sections* secara dinamis di bawah *Projects*.
+- Perombakan arsitektur *rendering* di `CVPreview.jsx` dari statis (*hardcoded*) menjadi pemetaan dinamis (melakukan loop pada larik `sectionOrder`).
+- Navigasi Tab di `EditorPanel.jsx` diubah agar secara cerdas mengikuti urutan baru yang ditetapkan pengguna di menu pengaturan.
+- Refaktor `useCVData.js` untuk mendukung operasi reorder section global dan operasi CRUD secara dinamis tidak hanya pada *section* bawaan, tetapi juga pada *custom sections* yang terdaftar di state `cvData.customSections`.
 
 ---
 

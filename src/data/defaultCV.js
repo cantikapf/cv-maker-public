@@ -107,5 +107,16 @@ export const defaultCV = {
   
   sectionConfig: {
     hiddenSections: [], // array of section IDs (e.g., 'publications') that are hidden from the editor tabs
+    sectionOrder: [
+      'workExperience',
+      'education',
+      'organizationalExperience',
+      'skills',
+      'languages',
+      'certifications',
+      'awards',
+      'publications',
+      'projects'
+    ]
   }
 }
