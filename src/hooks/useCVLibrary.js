@@ -1,6 +1,4 @@
 import { useState, useEffect, useCallback } from 'react'
-import { supabase } from '../utils/supabaseClient'
-import { useAuth } from './useAuth'
 
 const LIBRARY_KEY = 'cv_maker_library_v1'
 const MAX_CVS = 10
@@ -10,85 +8,26 @@ function generateId() {
 }
 
 export function useCVLibrary() {
-  const { user } = useAuth()
   const [library, setLibrary] = useState({ activeCvId: null, list: [] })
-  const [isSyncing, setIsSyncing] = useState(true)
 
-  // Initial load: offline cache + Supabase sync
   useEffect(() => {
-    let isMounted = true
-
-    const loadLibrary = async () => {
-      if (!user) {
-        setIsSyncing(false)
-        return
+    const stored = localStorage.getItem(LIBRARY_KEY)
+    if (stored) {
+      setLibrary(JSON.parse(stored))
+    } else {
+      const defaultId = generateId()
+      const defaultLibrary = {
+        activeCvId: defaultId,
+        list: [{ id: defaultId, name: 'My CV', updatedAt: Date.now() }]
       }
-      setIsSyncing(true)
-      
-      try {
-        // Try to load offline cache first for instant UI
-        const stored = localStorage.getItem(LIBRARY_KEY)
-        if (stored) {
-          setLibrary(JSON.parse(stored))
-        }
-
-        // Fetch from Supabase
-        if (supabase) {
-          const { data, error } = await supabase
-            .from('cv_documents')
-            .select('id, name, updated_at')
-            .eq('user_id', user.id)
-            .order('updated_at', { ascending: false })
-
-          if (error) throw error
-
-          if (isMounted) {
-            if (data && data.length > 0) {
-              const newList = data.map(d => ({
-                id: d.id,
-                name: d.name,
-                updatedAt: new Date(d.updated_at).getTime()
-              }))
-              
-              setLibrary(prev => {
-                // Ensure activeCvId is valid
-                let activeId = prev.activeCvId
-                if (!activeId || !newList.some(cv => cv.id === activeId)) {
-                  activeId = newList[0].id
-                }
-                const newLibrary = { activeCvId: activeId, list: newList }
-                localStorage.setItem(LIBRARY_KEY, JSON.stringify(newLibrary))
-                return newLibrary
-              })
-            } else {
-              // If empty in Supabase but we have a user, maybe it's their first time.
-              // Let's create a default CV for them.
-              const defaultId = generateId()
-              const defaultLibrary = {
-                activeCvId: defaultId,
-                list: [{ id: defaultId, name: 'My CV', updatedAt: Date.now() }]
-              }
-              setLibrary(defaultLibrary)
-              localStorage.setItem(LIBRARY_KEY, JSON.stringify(defaultLibrary))
-            }
-          }
-        }
-      } catch (err) {
-        console.error('Failed to load library from Supabase', err)
-      } finally {
-        if (isMounted) setIsSyncing(false)
-      }
+      setLibrary(defaultLibrary)
+      localStorage.setItem(LIBRARY_KEY, JSON.stringify(defaultLibrary))
     }
-
-    loadLibrary()
-    return () => { isMounted = false }
-  }, [user])
+  }, [])
 
   const createNewCV = useCallback(async (name = 'New CV') => {
-    if (!user) return null
     let newCvId = null
     
-    // Optimistic UI update
     setLibrary(prev => {
       if (prev.list.length >= MAX_CVS) {
         alert(`Batas maksimal CV tercapai (${MAX_CVS}). Hapus CV lama untuk membuat yang baru.`)
@@ -107,13 +46,9 @@ export function useCVLibrary() {
     })
 
     return newCvId
-  }, [user])
+  }, [])
 
   const duplicateCV = useCallback(async (sourceId) => {
-    if (!user) return null
-    
-    // We will handle the duplication of the actual data in the component or useCVData.
-    // For now, let's just do the metadata optimistic update.
     let newId = null
     setLibrary(prev => {
       if (prev.list.length >= MAX_CVS) {
@@ -135,28 +70,18 @@ export function useCVLibrary() {
       localStorage.setItem(LIBRARY_KEY, JSON.stringify(newLibrary))
       return newLibrary
     })
-    
-    if (newId && supabase) {
-      // Fetch source data from Supabase to duplicate
-      const { data: sourceData } = await supabase
-        .from('cv_documents')
-        .select('data')
-        .eq('id', sourceId)
-        .single()
-        
-      if (sourceData) {
-        await supabase.from('cv_documents').insert({
-          id: newId,
-          user_id: user.id,
-          name: `${library.list.find(c=>c.id===sourceId)?.name || 'CV'} (Copy)`,
-          data: sourceData.data
-        })
-      }
+
+    // Duplicate local storage content
+    if (newId) {
+       const sourceKey = sourceId === 'default' ? 'cv_maker_data_v1' : `cv_maker_cv_${sourceId}`
+       const sourceData = localStorage.getItem(sourceKey)
+       if (sourceData) {
+         localStorage.setItem(`cv_maker_cv_${newId}`, sourceData)
+       }
     }
-  }, [user, library])
+  }, [])
 
   const deleteCV = useCallback(async (idToDelete) => {
-    if (!user) return
     setLibrary(prev => {
       if (prev.list.length <= 1) {
         alert('Anda tidak bisa menghapus satu-satunya CV yang tersisa.')
@@ -174,11 +99,8 @@ export function useCVLibrary() {
       return newLibrary
     })
 
-    if (supabase) {
-      await supabase.from('cv_documents').delete().eq('id', idToDelete)
-    }
     localStorage.removeItem(`cv_maker_cv_${idToDelete}`)
-  }, [user])
+  }, [])
 
   const switchToCV = useCallback((id) => {
     setLibrary(prev => {
@@ -191,7 +113,7 @@ export function useCVLibrary() {
   }, [])
 
   const renameCV = useCallback(async (id, newName) => {
-    if (!newName.trim() || !user) return
+    if (!newName.trim()) return
     
     setLibrary(prev => {
       const newLib = {
@@ -201,11 +123,7 @@ export function useCVLibrary() {
       localStorage.setItem(LIBRARY_KEY, JSON.stringify(newLib))
       return newLib
     })
-
-    if (supabase) {
-      await supabase.from('cv_documents').update({ name: newName }).eq('id', id)
-    }
-  }, [user])
+  }, [])
 
   const updateCVTimestamp = useCallback((id) => {
     setLibrary(prev => {
@@ -222,7 +140,7 @@ export function useCVLibrary() {
     cvList: library.list,
     activeCvId: library.activeCvId,
     activeStorageKey: `cv_maker_cv_${library.activeCvId}`,
-    isSyncing,
+    isSyncing: false,
     createNewCV,
     duplicateCV,
     deleteCV,

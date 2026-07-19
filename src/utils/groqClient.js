@@ -16,26 +16,22 @@ export function cleanJSON(raw) {
 }
 
 /**
- * Retrieves all Groq API keys dynamically from environment variables matching VITE_GROQ_API_KEY*.
- * Supports comma-separated keys within a single env variable as well.
+ * Retrieves Groq API key from localStorage or prompts the user.
  * @returns {string[]}
  */
 export function getApiKeys() {
-  const keys = []
-  for (const envKey in import.meta.env) {
-    if (envKey.startsWith('VITE_GROQ_API_KEY')) {
-      const val = import.meta.env[envKey]
-      if (typeof val === 'string' && val.trim()) {
-        val.split(',').forEach(k => {
-          const trimmed = k.trim()
-          if (trimmed && !keys.includes(trimmed)) {
-            keys.push(trimmed)
-          }
-        })
-      }
-    }
+  const localKey = localStorage.getItem('demo_groq_api_key')
+  if (localKey) {
+    return [localKey]
   }
-  return keys
+
+  const userInput = window.prompt("Demo Publik CV Maker: Silakan masukkan API Key Groq Anda (dapatkan gratis dari console.groq.com) untuk mencoba fitur AI. API Key ini hanya disimpan di browser Anda secara lokal.")
+  if (userInput && userInput.trim()) {
+    localStorage.setItem('demo_groq_api_key', userInput.trim())
+    return [userInput.trim()]
+  }
+
+  return []
 }
 
 /**
