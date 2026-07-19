@@ -42,6 +42,7 @@ export default function App() {
     addCustomSection,
     updateCustomSection,
     deleteCustomSection,
+    reorderSectionConfig,
   } = useCVData(activeStorageKey)
 
   const {
@@ -246,6 +247,7 @@ export default function App() {
           onAddCustomSection={addCustomSection}
           onUpdateCustomSection={updateCustomSection}
           onDeleteCustomSection={deleteCustomSection}
+          onReorderSectionConfig={reorderSectionConfig}
         />
 
         <section className="preview-panel">
