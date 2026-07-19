@@ -185,35 +185,120 @@ export function useCVData(storageKey = 'cv_maker_data_v1') {
     }))
   }, [setWithHistory])
 
-  // ── Generic CRUD for array sections ────────────────────────────────────
-  const addEntry = useCallback((section, entry) => {
-    const id = `${section}_${Date.now()}`
+  // ── Configuration & Custom Sections ──────────────────────────────────────
+  const toggleSectionVisibility = useCallback((sectionId) => {
+    setWithHistory(prev => {
+      const hidden = prev.sectionConfig?.hiddenSections || []
+      const isHidden = hidden.includes(sectionId)
+      return {
+        ...prev,
+        sectionConfig: {
+          ...prev.sectionConfig,
+          hiddenSections: isHidden ? hidden.filter(id => id !== sectionId) : [...hidden, sectionId]
+        }
+      }
+    })
+  }, [setWithHistory])
+
+  const addCustomSection = useCallback((title) => {
+    const id = `cs_${Date.now()}`
     setWithHistory(prev => ({
       ...prev,
-      [section]: [...prev[section], { ...entry, id }],
+      customSections: [...(prev.customSections || []), { id, title, entries: [] }]
     }))
     return id
   }, [setWithHistory])
 
-  const updateEntry = useCallback((section, id, updatedFields) => {
+  const updateCustomSection = useCallback((id, title) => {
     setWithHistory(prev => ({
       ...prev,
-      [section]: prev[section].map(item =>
-        item.id === id ? { ...item, ...updatedFields } : item
-      ),
+      customSections: (prev.customSections || []).map(s => s.id === id ? { ...s, title } : s)
     }))
   }, [setWithHistory])
 
-  const deleteEntry = useCallback((section, id) => {
+  const deleteCustomSection = useCallback((id) => {
     setWithHistory(prev => ({
       ...prev,
-      [section]: prev[section].filter(item => item.id !== id),
+      customSections: (prev.customSections || []).filter(s => s.id !== id)
     }))
+  }, [setWithHistory])
+
+  // ── Generic CRUD for array sections (Built-in & Custom) ─────────────────
+  const addEntry = useCallback((section, entry) => {
+    const id = `${section}_${Date.now()}`
+    setWithHistory(prev => {
+      if (section.startsWith('cs_')) {
+        return {
+          ...prev,
+          customSections: (prev.customSections || []).map(s => 
+            s.id === section ? { ...s, entries: [...(s.entries || []), { ...entry, id }] } : s
+          )
+        }
+      }
+      return {
+        ...prev,
+        [section]: [...(prev[section] || []), { ...entry, id }],
+      }
+    })
+    return id
+  }, [setWithHistory])
+
+  const updateEntry = useCallback((section, id, updatedFields) => {
+    setWithHistory(prev => {
+      if (section.startsWith('cs_')) {
+        return {
+          ...prev,
+          customSections: (prev.customSections || []).map(s => 
+            s.id === section ? { 
+              ...s, 
+              entries: s.entries.map(item => item.id === id ? { ...item, ...updatedFields } : item) 
+            } : s
+          )
+        }
+      }
+      return {
+        ...prev,
+        [section]: prev[section].map(item =>
+          item.id === id ? { ...item, ...updatedFields } : item
+        ),
+      }
+    })
+  }, [setWithHistory])
+
+  const deleteEntry = useCallback((section, id) => {
+    setWithHistory(prev => {
+      if (section.startsWith('cs_')) {
+        return {
+          ...prev,
+          customSections: (prev.customSections || []).map(s => 
+            s.id === section ? { ...s, entries: s.entries.filter(item => item.id !== id) } : s
+          )
+        }
+      }
+      return {
+        ...prev,
+        [section]: prev[section].filter(item => item.id !== id),
+      }
+    })
   }, [setWithHistory])
 
   const reorderEntries = useCallback((section, fromIndex, toIndex) => {
     setWithHistory(prev => {
-      const arr = [...prev[section]]
+      if (section.startsWith('cs_')) {
+        return {
+          ...prev,
+          customSections: (prev.customSections || []).map(s => {
+            if (s.id === section) {
+              const arr = [...(s.entries || [])]
+              const [moved] = arr.splice(fromIndex, 1)
+              arr.splice(toIndex, 0, moved)
+              return { ...s, entries: arr }
+            }
+            return s
+          })
+        }
+      }
+      const arr = [...(prev[section] || [])]
       const [moved] = arr.splice(fromIndex, 1)
       arr.splice(toIndex, 0, moved)
       return { ...prev, [section]: arr }
@@ -354,6 +439,11 @@ export function useCVData(storageKey = 'cv_maker_data_v1') {
     deleteEntry,
     reorderEntries,
     applyPatch,
+    // Custom Sections & Config
+    toggleSectionVisibility,
+    addCustomSection,
+    updateCustomSection,
+    deleteCustomSection,
     // Import / Export
     exportJSON,
     importFile,

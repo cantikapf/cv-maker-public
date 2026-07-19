@@ -38,6 +38,10 @@ export default function App() {
     exportJSON,
     importFile,
     resetToDefault,
+    toggleSectionVisibility,
+    addCustomSection,
+    updateCustomSection,
+    deleteCustomSection,
   } = useCVData(activeStorageKey)
 
   const {
@@ -238,6 +242,10 @@ export default function App() {
           onAISummaryAction={handleAISummaryAction}
           onApplySummary={handleApplySummary}
           onAnalyzeRepo={analyzeGithubRepo}
+          onToggleSectionVisibility={toggleSectionVisibility}
+          onAddCustomSection={addCustomSection}
+          onUpdateCustomSection={updateCustomSection}
+          onDeleteCustomSection={deleteCustomSection}
         />
 
         <section className="preview-panel">

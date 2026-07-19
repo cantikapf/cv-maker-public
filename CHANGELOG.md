@@ -54,6 +54,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [1.4.0] - 2026-07-19
+### Added
+- **Customizable Sections (Section Manager)** — Menambahkan fitur manajemen section yang memungkinkan pengguna untuk menyembunyikan/menampilkan section bawaan dan membuat *Custom Section* baru (misal: "Pengalaman Relawan", "Hobi") dengan judul bebas.
+- **SectionManager Component** — Antarmuka pengguna baru di EditorPanel untuk mengatur visibilitas section dan mengelola section kustom (tambah, edit nama, hapus).
+- Dukungan *Custom Sections* di dalam **AI Chat** (`groqClient.js`). AI kini dapat memahami, mengedit, menambah, atau menghapus entri di dalam *Custom Sections* jika diminta oleh pengguna.
+
+### Changed
+- Refaktor `useCVData.js` untuk mendukung operasi CRUD secara dinamis tidak hanya pada *section* bawaan, tetapi juga pada *custom sections* yang terdaftar di state `cvData.customSections`.
+- Pembaruan rendering `CVPreview.jsx` untuk mendeteksi dan menampilkan *custom sections* secara dinamis di bawah *Projects*.
+
+---
+
 ## [1.3.0] - 2026-07-19
 ### Fixed
 - **AI Chat: Terjemahan CV ke Bahasa Inggris tidak berfungsi** — Diperbaiki 3 bug berlapis: (1) Konflik aturan di system prompt yang tidak memberi instruksi bagaimana menerjemahkan semua section sekaligus; (2) `applyPatch` yang hanya bisa memproses satu operasi per respons AI; (3) batas `max_tokens: 2048` yang terlalu kecil sehingga respons AI terpotong di tengah.
