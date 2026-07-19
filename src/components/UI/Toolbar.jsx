@@ -20,6 +20,8 @@ export default function Toolbar({
   onRedo,
   canUndo,
   canRedo,
+  user,
+  onSignOut,
 }) {
   const importRef = useRef(null)
 
@@ -126,6 +128,31 @@ export default function Toolbar({
         >
           <RiRefreshLine />
         </button>
+
+        <div className="toolbar__divider" />
+
+        {user && (
+          <div className="toolbar__user-info" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginLeft: '0.5rem' }}>
+            {user.user_metadata?.avatar_url && (
+              <img 
+                src={user.user_metadata.avatar_url} 
+                alt="Profile" 
+                style={{ width: '24px', height: '24px', borderRadius: '50%' }}
+              />
+            )}
+            <span style={{ fontSize: '0.875rem', color: 'var(--text-secondary)' }}>
+              {user.user_metadata?.full_name || user.email}
+            </span>
+            <button
+              className="btn btn--danger-ghost"
+              onClick={onSignOut}
+              title="Logout"
+              style={{ padding: '0.25rem 0.5rem', fontSize: '0.75rem' }}
+            >
+              Logout
+            </button>
+          </div>
+        )}
       </div>
     </header>
   )
