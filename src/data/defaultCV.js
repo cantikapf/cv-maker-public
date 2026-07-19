@@ -1,28 +1,41 @@
 export const defaultCV = {
   personalInfo: {
-    name: 'Your Full Name',
-    location: 'City, Country',
-    email: 'your.email@example.com',
-    phone: '+1 234 567 890',
-    linkedin: 'linkedin.com/in/your-profile',
-    github: '',
-    portfolio: '',
+    name: 'Jane Doe',
+    location: 'San Francisco, CA',
+    email: 'jane.doe@example.com',
+    phone: '+1 415 555 0198',
+    linkedin: 'linkedin.com/in/janedoe',
+    github: 'github.com/janedoe',
+    portfolio: 'janedoe.design',
     photo: null,
     summary:
-      'Write a brief professional summary here. Describe your key skills, experience, and career goals in 2–3 sentences. Keep it under 50 words.',
+      'Innovative Product Designer with 5+ years of experience in creating user-centric digital experiences. Proven track record of leading design projects from concept to launch, increasing user engagement by 40% at previous roles. Passionate about accessibility and scalable design systems.',
   },
 
   workExperience: [
     {
       id: 'we_001',
-      jobTitle: 'Your Job Title',
-      company: 'Company Name',
-      location: 'City, Country',
-      startDate: 'Jan 2023',
+      jobTitle: 'Senior Product Designer',
+      company: 'TechFlow Solutions',
+      location: 'San Francisco, CA',
+      startDate: 'Mar 2021',
       endDate: 'Present',
       bullets: [
-        'Describe your key achievement or responsibility here. Use action verbs and quantify results.',
-        'Led a team of X people to accomplish Y, resulting in Z% improvement.',
+        'Spearheaded the redesign of the flagship mobile application, resulting in a 45% increase in daily active users.',
+        'Established and maintained a comprehensive design system adopted by 5 cross-functional engineering teams.',
+        'Conducted user research and usability testing with over 100 participants to validate new feature prototypes.',
+      ],
+    },
+    {
+      id: 'we_002',
+      jobTitle: 'UX/UI Designer',
+      company: 'Creative Studio Agency',
+      location: 'New York, NY',
+      startDate: 'Jun 2018',
+      endDate: 'Feb 2021',
+      bullets: [
+        'Designed end-to-end e-commerce experiences for 12+ enterprise clients, boosting average conversion rates by 22%.',
+        'Collaborated closely with product managers and front-end developers in an Agile environment.',
       ],
     },
   ],
@@ -30,13 +43,16 @@ export const defaultCV = {
   education: [
     {
       id: 'edu_001',
-      degree: 'Bachelor of Science in Your Major',
-      institution: 'University Name',
-      location: 'City, Country',
-      startDate: 'Sep 2019',
-      endDate: 'Jun 2023',
-      gpa: '',
-      bullets: [],
+      degree: 'Bachelor of Fine Arts in Interaction Design',
+      institution: 'Rhode Island School of Design',
+      location: 'Providence, RI',
+      startDate: 'Sep 2014',
+      endDate: 'May 2018',
+      gpa: '3.8/4.0',
+      bullets: [
+        'Graduated with Honors',
+        'Vice President of the Student Design Association',
+      ],
     },
   ],
 
@@ -45,25 +61,45 @@ export const defaultCV = {
   skills: [
     {
       id: 'skill_001',
-      category: 'Technical Skills',
-      items: 'List your tools and technologies here, e.g. Python, Excel, Figma',
+      category: 'Design Tools',
+      items: 'Figma, Sketch, Adobe Creative Suite (Illustrator, Photoshop, After Effects), Principle',
     },
     {
       id: 'skill_002',
-      category: 'Professional Skills',
-      items: 'List your soft skills, e.g. Project Management, Communication, Problem Solving',
+      category: 'UX Methods',
+      items: 'Wireframing, Rapid Prototyping, Usability Testing, User Journey Mapping, Information Architecture',
+    },
+    {
+      id: 'skill_003',
+      category: 'Front-end (Basic)',
+      items: 'HTML, CSS, React, Tailwind CSS',
     },
   ],
 
   languages: [
-    { id: 'lang_001', name: 'English', proficiency: 'Professional working proficiency' },
+    { id: 'lang_001', name: 'English', proficiency: 'Native' },
+    { id: 'lang_002', name: 'Spanish', proficiency: 'Professional working proficiency' },
   ],
 
-  certifications: [],
+  certifications: [
+    {
+      id: 'cert_001',
+      name: 'Google UX Design Professional Certificate',
+      issuer: 'Coursera',
+      date: 'Aug 2020',
+    }
+  ],
 
   awards: [],
 
   publications: [],
 
-  projects: [],
+  projects: [
+    {
+      id: 'proj_001',
+      name: 'EcoTrack Mobile App',
+      description: 'A personal project aimed at helping users track their daily carbon footprint through automated integrations with maps and purchase history. Designed the full UI/UX flow from scratch.',
+      link: 'janedoe.design/ecotrack'
+    }
+  ],
 }
