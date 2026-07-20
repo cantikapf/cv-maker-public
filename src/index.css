@@ -2361,3 +2361,109 @@ html, body, #root {
   gap: 2px;
 }
 
+/* ── Mobile Navigation Toggle ── */
+.mobile-nav {
+  display: none;
+}
+
+/* ── Mobile Responsiveness (@media) ── */
+@media (max-width: 768px) {
+  /* Grid Layout */
+  .app {
+    grid-template-rows: var(--toolbar-h) 1fr var(--toolbar-h);
+  }
+  
+  .app__body {
+    grid-template-columns: 1fr;
+    overflow: hidden;
+  }
+
+  /* View Toggling */
+  .mobile-view--editor .preview-panel {
+    display: none;
+  }
+  .mobile-view--preview .editor-panel {
+    display: none;
+  }
+
+  /* Bottom Navigation */
+  .mobile-nav {
+    display: flex;
+    background: var(--bg-panel);
+    border-top: 1px solid var(--border);
+    justify-content: space-around;
+    align-items: stretch;
+    grid-column: 1 / -1;
+    z-index: 100;
+  }
+
+  .mobile-nav__btn {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background: transparent;
+    border: none;
+    color: var(--text-muted);
+    font-size: 11px;
+    font-weight: 500;
+    gap: 4px;
+    cursor: pointer;
+    transition: all var(--t);
+    padding: var(--s2) 0;
+  }
+
+  .mobile-nav__btn:hover {
+    background: var(--bg-hover);
+  }
+
+  .mobile-nav__btn--active {
+    color: var(--accent);
+    background: var(--accent-bg);
+  }
+
+  .mobile-nav__icon {
+    font-size: 18px;
+  }
+
+  /* Toolbar Scroll */
+  .toolbar {
+    overflow-x: auto;
+    white-space: nowrap;
+    padding: 0 var(--s3);
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  .toolbar::-webkit-scrollbar {
+    display: none;
+  }
+  
+  /* Left Sidebar / Tabs Scroll */
+  .editor-tabs {
+    overflow-x: auto;
+    flex-wrap: nowrap;
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  .editor-tabs::-webkit-scrollbar {
+    display: none;
+  }
+  
+  .editor-tabs__tab {
+    flex-shrink: 0;
+  }
+
+  /* Modals / Dialogs touch-friendly sizing */
+  .export-dialog__content,
+  .cv-library-panel__content {
+    width: 95%;
+    max-width: none;
+    max-height: 90vh;
+    padding: var(--s4);
+  }
+  
+  .cv-preview-wrap {
+    padding: var(--s2);
+  }
+}
