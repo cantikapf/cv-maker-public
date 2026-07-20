@@ -196,6 +196,8 @@ export default function App() {
     }
   }, [resetToDefault])
 
+  const [mobileView, setMobileView] = useState('editor') // 'editor' | 'preview'
+
   if (loading) {
     return <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', backgroundColor: 'var(--bg-primary)', color: 'var(--text-primary)' }}>Memuat...</div>
   }
@@ -205,7 +207,7 @@ export default function App() {
   }
 
   return (
-    <div className="app">
+    <div className={`app mobile-view--${mobileView}`}>
       <Toolbar
         onOpenLibrary={() => setIsLibraryOpen(true)}
         onExportPDF={() => setIsExportDialogOpen(true)}
@@ -254,6 +256,24 @@ export default function App() {
           <CVPreview cvData={cvData} />
         </section>
       </main>
+
+      {/* ── Mobile Navigation Toggle ── */}
+      <nav className="mobile-nav">
+        <button
+          className={`mobile-nav__btn ${mobileView === 'editor' ? 'mobile-nav__btn--active' : ''}`}
+          onClick={() => setMobileView('editor')}
+        >
+          <span className="mobile-nav__icon">✏️</span>
+          <span className="mobile-nav__label">Editor</span>
+        </button>
+        <button
+          className={`mobile-nav__btn ${mobileView === 'preview' ? 'mobile-nav__btn--active' : ''}`}
+          onClick={() => setMobileView('preview')}
+        >
+          <span className="mobile-nav__icon">📄</span>
+          <span className="mobile-nav__label">Preview PDF</span>
+        </button>
+      </nav>
 
       {isExportDialogOpen && (
         <ExportDialog
