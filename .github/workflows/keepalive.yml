@@ -1,0 +1,20 @@
+name: Keep Supabase Alive
+
+on:
+  schedule:
+    # Run every 3 days at 00:00 UTC
+    - cron: '0 0 */3 * *'
+  workflow_dispatch: # Allow manual trigger
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping Supabase REST API
+        run: |
+          curl -sS -X GET "$SUPABASE_URL/rest/v1/cv_documents?select=id&limit=1" \
+          -H "apikey: $SUPABASE_ANON_KEY" \
+          -H "Authorization: Bearer $SUPABASE_ANON_KEY" > /dev/null
+        env:
+          SUPABASE_URL: "https://qlqmsspabxvkpjvhbwgs.supabase.co"
+          SUPABASE_ANON_KEY: "sb_publishable_fo-ct_fWHCJNjpimZYLiyA_5q_IAgSH"
