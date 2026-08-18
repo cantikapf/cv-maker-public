@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [1.2.1] - 2026-08-18
+
+### Fixed
+- **Supabase Keepalive GitHub Action**: Memperbaiki syntax `curl` pada cron job GitHub Action yang digunakan untuk mencegah database Supabase auto-pause (inactivity). Sebelumnya request gagal karena mengirimkan publishable key sebagai token JWT. Menambahkan flag `-f` agar error HTTP terdeteksi pada workflow.
+
+---
+
 ## [1.2.0] - 2026-07-07
 
 ### Added
