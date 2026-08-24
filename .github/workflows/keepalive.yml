@@ -12,7 +12,9 @@ jobs:
     steps:
       - name: Ping Supabase REST API
         run: |
-          curl -f -sS -X GET "$SUPABASE_URL/rest/v1/cv_documents?select=id&limit=1" \
+          # We ping a dedicated 'keepalive' table because querying RLS-protected tables 
+          # like 'cv_documents' as anon returns 0 rows, which Supabase DOES NOT count as activity.
+          curl -f -sS -X GET "$SUPABASE_URL/rest/v1/keepalive?select=id&limit=1" \
           -H "apikey: $SUPABASE_ANON_KEY" > /dev/null
         env:
           SUPABASE_URL: "https://qlqmsspabxvkpjvhbwgs.supabase.co"

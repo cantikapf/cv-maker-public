@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [1.2.2] - 2026-08-24
+
+### Fixed
+- **Supabase Keepalive (Tahap 2)**: Mengubah endpoint target ping pada GitHub Action dari `cv_documents` menjadi tabel khusus `keepalive`. Hal ini karena query ke tabel yang dilindungi RLS (Row Level Security) menggunakan anon key akan mengembalikan 0 baris, yang tidak dihitung sebagai "aktivitas database" oleh sensor auto-pause Supabase.
+
+---
+
 ## [1.2.1] - 2026-08-18
 
 ### Fixed
