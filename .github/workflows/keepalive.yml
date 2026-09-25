@@ -1,0 +1,37 @@
+name: Keep Supabase Alive
+
+on:
+  schedule:
+    # Run twice daily (04:00 & 16:00 UTC) to stay well within the 7-day window.
+    # Previous 3-day schedule was too infrequent — Supabase still paused the project.
+    - cron: '0 4,16 * * *'
+  workflow_dispatch: # Allow manual trigger
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Write to keepalive table (updates timestamp)
+        run: |
+          # PATCH updates the 'pinged_at' column on the keepalive row.
+          # A write operation is the most reliable way to register as
+          # "real database activity" and prevent Supabase auto-pause.
+          curl -f -sS -X PATCH "$SUPABASE_URL/rest/v1/keepalive?id=eq.1" \
+            -H "apikey: $SUPABASE_ANON_KEY" \
+            -H "Authorization: Bearer $SUPABASE_ANON_KEY" \
+            -H "Content-Type: application/json" \
+            -H "Prefer: return=minimal" \
+            -d '{"pinged_at": "'"$(date -u +%Y-%m-%dT%H:%M:%SZ)"'"}' > /dev/null
+        env:
+          SUPABASE_URL: "https://qlqmsspabxvkpjvhbwgs.supabase.co"
+          SUPABASE_ANON_KEY: "sb_publishable_fo-ct_fWHCJNjpimZYLiyA_5q_IAgSH"
+
+      - name: Verify — read keepalive table
+        run: |
+          # Follow-up SELECT to confirm the database is responsive.
+          curl -f -sS -X GET "$SUPABASE_URL/rest/v1/keepalive?select=id,pinged_at&limit=1" \
+            -H "apikey: $SUPABASE_ANON_KEY" \
+            -H "Authorization: Bearer $SUPABASE_ANON_KEY"
+        env:
+          SUPABASE_URL: "https://qlqmsspabxvkpjvhbwgs.supabase.co"
+          SUPABASE_ANON_KEY: "sb_publishable_fo-ct_fWHCJNjpimZYLiyA_5q_IAgSH"
