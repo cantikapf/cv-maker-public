@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [1.2.3] - 2026-09-25
+
+### Fixed
+- **Supabase Keepalive (Tahap 3)**: Overhaul total GitHub Action keepalive untuk mencegah auto-pause berulang:
+  - Frekuensi cron ditingkatkan dari 1x/3 hari (`*/3`) menjadi 2x/hari (`04:00 & 16:00 UTC`). Jadwal lama terbukti tidak cukup — Supabase tetap mem-pause project setiap ~14 hari.
+  - Operasi diubah dari `GET` (read-only) menjadi `PATCH` (write) yang meng-update kolom `pinged_at` di tabel `keepalive`. Write operation lebih reliabel dihitung sebagai "real database activity".
+  - Header `Authorization: Bearer` ditambahkan kembali agar request dikenali sebagai authenticated API call.
+  - Ditambahkan step verifikasi (`GET` read-back) setelah write untuk memastikan database responsif.
+  - Memerlukan migrasi SQL: tambah kolom `pinged_at` dan RLS policy `UPDATE` pada tabel `keepalive`.
+
+---
+
 ## [1.2.2] - 2026-08-24
 
 ### Fixed
