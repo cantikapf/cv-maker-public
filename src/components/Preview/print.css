@@ -15,6 +15,7 @@
   .dialog-overlay,
   .dialog,
   .export-dialog,
+  .mobile-nav,
   .cv-preview-wrap > *:not(#cv-document) {
     display: none !important;
   }

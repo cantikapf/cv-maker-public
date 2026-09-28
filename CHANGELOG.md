@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [1.2.4] - 2026-09-28
+
+### Fixed
+- **Navigasi Mobile di PDF Export (`print.css`)**: Menyembunyikan bar navigasi bawah (`.mobile-nav` yang berisi tombol "Editor" dan "Preview PDF") saat mencetak atau mengekspor CV ke PDF. Sebelumnya, bar navigasi ini ikut tercetak di bagian paling bawah dokumen jika pengguna mencetak dari layar mobile atau jendela browser yang berukuran $\le 768\text{px}$.
+
+---
+
 ## [1.2.3] - 2026-09-25
 
 ### Fixed
